@@ -101,7 +101,7 @@ def set_6_5_perfect_synergy():
     team_dict = dict.fromkeys(trait_breaks.keys(), 0)
     return functools.partial(is_perfect_synergy, units=units, trait_breaks=trait_breaks, team_dict=team_dict)
 
-def best_of_size(units, size, measure, top_n, workers = 16, chunksize = 10000):
+def best_of_size(units, size, measure, top_n, workers = 48, chunksize = 10000):
     """
     returns the top n teams of size size using measure to evaluate the teams
     """
@@ -124,24 +124,24 @@ def all_perfect_synergies(minsize, maxsize, top_n):
     def team_id_to_name(team, unit_names):
         return [unit_names[unit] for unit in team]
     def teams_to_names(teams, unit_names):
-        return [team_id_to_name(team[1], unit_names) for team in teams]
+        return [(team_id_to_name(team[1], unit_names), team[0]) for team in teams]
     units_data_path = Path("champs.csv")
     units, unit_dict, _, _, traits_inv = load_units(units_data_path)
     perfect = set_6_5_perfect_synergy()
     team_comps = {}
     for team_size in range(minsize, maxsize + 1):
         team_comps[team_size] = teams_to_names(best_of_size(units, team_size, perfect, top_n), unit_dict)
+        print(f"Finished with team of size {team_size}")
     return team_comps
 
-
 def main():
-    r = all_perfect_synergies(1, 9, 500)
+    r = all_perfect_synergies(4, 9, 500)
     # save to file, creating if necessary
     with open("perfect_synergies.json", "w") as f:
         json.dump(r, f)
-    for i in r[:5]:
+    for i in r:
         print("Comps of size", i)
-        print(r[i])
+        print(r[i][:20])
         print("\n")
         print("\n")
 
