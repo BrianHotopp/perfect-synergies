@@ -9,6 +9,9 @@ use itertools::Itertools;
 use rayon::prelude::*;
 // _file reading and writing
 use std::fs;
+use std::fs::File;
+use std::io::Write;
+
 
 fn read_champs(_file: &str) -> (HashMap<u8, String>, HashMap<String, u8>) {
     // reads the champion names from the _file
@@ -159,6 +162,38 @@ fn do_perfect_synergies(champs: &HashMap<u8, String>, traits: &HashMap<u8, Strin
     }
     return (*teamsize, teams)
 }
+fn do_all_perfect_synergies(champs: &HashMap<u8, String>, traits: &HashMap<u8, String>, champtraits: &HashMap<u8, Vec<u8>>,breaks: &HashMap<u8, HashSet<u8>>, min_teamsize: &u8, max_teamsize: &u8) -> HashMap<u8, Vec<Vec<String>>> {
+    // does perfect synergies for all teamsizes between min_teamsize and max_teamsize
+    // returns:
+    // a hashmap mapping teamsize to a vector of teams
+    //
+    // initialize the hashmap
+    let mut teams = HashMap::new();
+    // for each teamsize
+    for teamsize in *min_teamsize..=*max_teamsize {
+
+        let now = Instant::now();
+        // do the perfect synergies for the teamsize
+        let (teamsize, team) = do_perfect_synergies(champs, traits, champtraits, breaks, &teamsize);
+        // add the teams to the hashmap
+        teams.insert(teamsize, team);
+        // print the time it took
+    let elapsed = now.elapsed();
+    // print elapsed time
+    println!("Finished teamsize {} in {}.{:09} seconds", teamsize, elapsed.as_secs(), elapsed.subsec_nanos());
+    }
+    // return the hashmap
+    teams
+}
+fn perfect_synergies_to_json(teams: &HashMap<u8, Vec<Vec<String>>>, file: &str) {
+    // writes the perfect synergies to a json file using serde_json
+    // teams is a hashmap mapping teamsize to a vector of teams
+    // file is the name of the file to write to
+    let mut file = File::create(file).unwrap();
+    let teams_json = serde_json::to_string_pretty(teams).unwrap();
+    file.write_all(teams_json.as_bytes()).unwrap();
+}
+
 fn main() {
 // produce the following
 // hashmap champs int, string where the ints are champid and the strings are names
@@ -169,15 +204,7 @@ fn main() {
     let (traits, traits_rev) = read_traits("traits.csv");
     let breaks = read_breaks("traits.csv", &traits_rev);
     let champ_traits = read_champ_traits("champs.csv", &champs_rev, &traits_rev);
-    let teamsize: u8 = 4;
-    let now = Instant::now();
-    let ps = do_perfect_synergies(&champs, &traits, &champ_traits, &breaks, &teamsize);
-    let elapsed = now.elapsed();
-    // print elapsed time
-    println!("{:?}", elapsed);
-    println!("{:?}", ps);
-    //println!("{:?}", champs);
-    //println!("{:?}", traits);
-    //println!("{:?}", breaks);
+    let teams = do_all_perfect_synergies(&champs, &traits, &champ_traits, &breaks, &1, &10);
+    perfect_synergies_to_json(&teams, "perfect_synergies.json");
 
 }
