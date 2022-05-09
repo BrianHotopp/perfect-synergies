@@ -101,11 +101,7 @@ def set_6_5_perfect_synergy():
     team_dict = dict.fromkeys(trait_breaks.keys(), 0)
     return functools.partial(is_perfect_synergy, units=units, trait_breaks=trait_breaks, team_dict=team_dict)
 
-<<<<<<< HEAD
 def best_of_size(units, size, measure, top_n, workers = 12, chunksize = 10000):
-=======
-def best_of_size(units, size, measure, top_n, workers = 48, chunksize = 10000):
->>>>>>> b85e09e4414def2696b262ad1b794f6d4c09293c
     """
     returns the top n teams of size size using measure to evaluate the teams
     """
@@ -135,11 +131,7 @@ def all_perfect_synergies(minsize, maxsize, top_n):
     team_comps = {}
     for team_size in range(minsize, maxsize + 1):
         team_comps[team_size] = teams_to_names(best_of_size(units, team_size, perfect, top_n), unit_dict)
-<<<<<<< HEAD
-        print("Finished teams of size {}".format(team_size))
-=======
         print(f"Finished with team of size {team_size}")
->>>>>>> b85e09e4414def2696b262ad1b794f6d4c09293c
     return team_comps
 
 def main():
