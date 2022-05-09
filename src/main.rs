@@ -193,7 +193,10 @@ fn perfect_synergies_to_json(teams: &HashMap<u8, Vec<Vec<String>>>, file: &str) 
     let teams_json = serde_json::to_string_pretty(teams).unwrap();
     file.write_all(teams_json.as_bytes()).unwrap();
 }
-
+fn psyns(){
+    let teams = do_all_perfect_synergies(&champs, &traits, &champ_traits, &breaks, &1, &9);
+    perfect_synergies_to_json(&teams, "perfect_synergies.json");
+}
 fn main() {
 // produce the following
 // hashmap champs int, string where the ints are champid and the strings are names
@@ -204,7 +207,4 @@ fn main() {
     let (traits, traits_rev) = read_traits("traits.csv");
     let breaks = read_breaks("traits.csv", &traits_rev);
     let champ_traits = read_champ_traits("champs.csv", &champs_rev, &traits_rev);
-    let teams = do_all_perfect_synergies(&champs, &traits, &champ_traits, &breaks, &1, &9);
-    perfect_synergies_to_json(&teams, "perfect_synergies.json");
-
 }
