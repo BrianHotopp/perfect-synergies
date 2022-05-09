@@ -204,7 +204,7 @@ fn main() {
     let (traits, traits_rev) = read_traits("traits.csv");
     let breaks = read_breaks("traits.csv", &traits_rev);
     let champ_traits = read_champ_traits("champs.csv", &champs_rev, &traits_rev);
-    let teams = do_all_perfect_synergies(&champs, &traits, &champ_traits, &breaks, &1, &10);
+    let teams = do_all_perfect_synergies(&champs, &traits, &champ_traits, &breaks, &1, &9);
     perfect_synergies_to_json(&teams, "perfect_synergies.json");
 
 }
