@@ -4,7 +4,12 @@ use std::collections::HashSet;
 use std::time::Instant;
 // Combinations
 use itertools::Itertools;
+#[cfg(not(target_env = "msvc"))]
+use jemallocator::Jemalloc;
 
+#[cfg(not(target_env = "msvc"))]
+#[global_allocator]
+static GLOBAL: Jemalloc = Jemalloc;
 
 use rayon::prelude::*;
 // _file reading and writing
@@ -300,7 +305,7 @@ fn main() {
     let breaks = read_breaks("traits.csv", &traits_rev);
     let champ_traits = read_champ_traits("champs.csv", &champs_rev, &traits_rev);
     let wastes = compute_wastes(&breaks);
-    let n = 3;
+    let n = 1;
     let min_team_size = 1;
     let max_team_size = 9;
     let teams = do_all_ltn_synergies(&champs, &traits, &champ_traits, &wastes, &min_team_size, &max_team_size, &n);
@@ -308,5 +313,4 @@ fn main() {
     //let teams = do_all_perfect_synergies(&champs, &traits, &champ_traits, &breaks, &1, &4);
     //let fname = format!("perfect_synergies.json");
     synergies_to_json(&teams, &fname);
-
 }
