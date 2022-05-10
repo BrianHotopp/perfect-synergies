@@ -107,9 +107,34 @@ fn read_champ_traits(_file: &str, champs_rev: &HashMap<String, u8>, traits_rev: 
     // return the hashmap
     champ_traits
 }
-
+fn less_than_n_wasted(team: &Vec<&u8>, traits: &HashMap<u8, String>, unit_traits: &HashMap<u8, Vec<u8>>,wastes: &HashMap<u8, HashMap<u8, u8>>, n: &u8) -> bool {
+    // checks if the team has less than n wasted traits
+    let mut team_traits = HashMap::new();
+    for trait_id in traits.keys() {
+        team_traits.insert(*trait_id, 0);
+    }
+    for nit in team {
+        // for each unit in the team get the traits
+        let unit_traits = &unit_traits[*nit];
+        // increment the count for each trait
+        for trait_id in unit_traits {
+            team_traits.insert(*trait_id, team_traits[trait_id] + 1);
+        }
+    }
+    // for each trait in the team
+    // if the count is not in the breaks for the trait
+    // return false
+    let mut waste_count = 0;
+    for (trait_id, count) in team_traits.iter_mut() {
+        // for each trait in the team get the waste for the count
+        waste_count += wastes[trait_id][count];
+    }
+    if waste_count <= *n {
+        return true;
+    }
+    false
+}
 fn is_perfect_synergy(team: &Vec<&u8>, traits: &HashMap<u8, String>, unit_traits: &HashMap<u8, Vec<u8>>,breaks: &HashMap<u8, HashSet<u8>>) -> bool {
-    // checks if the team is a perfect synergy
     // returns:
     // true if the team is a perfect synergy
     // false otherwise
@@ -185,7 +210,59 @@ fn do_all_perfect_synergies(champs: &HashMap<u8, String>, traits: &HashMap<u8, S
     // return the hashmap
     teams
 }
-fn perfect_synergies_to_json(teams: &HashMap<u8, Vec<Vec<String>>>, file: &str) {
+
+fn do_ltn_synergies(champs: &HashMap<u8, String>, traits: &HashMap<u8, String>, unit_traits: &HashMap<u8, Vec<u8>>, wastes: &HashMap<u8, HashMap<u8, u8>>, teamsize: &u8, n: &u8) -> (u8, Vec<Vec<String>>) {
+    // returns:
+    // a tuple of the following:
+    // 1 teamsize, 2 a vector of the teams of that size that have less than n wasted traits
+
+    // initialize the vector of teams
+    let mut teams = Vec::new();
+    // .par_bridge()
+    let ps = champs.keys().combinations((*teamsize).into()).par_bridge().filter({
+        |team|
+        less_than_n_wasted(team, traits, unit_traits, wastes, n)
+    });
+    // convert from parallel iterator
+    for p in ps.collect::<Vec<Vec<&u8>>>() {
+        // initialize the team
+        let mut team = Vec::new();
+        // for each unit in the team
+        for unit in p {
+            // add the unit to the team
+            team.push(champs.get(unit).unwrap().to_string());
+        }
+        // add the team to the vector of teams
+        teams.push(team);
+    }
+    return (*teamsize, teams)
+
+}
+
+fn do_all_ltn_synergies(champs: &HashMap<u8, String>, traits: &HashMap<u8, String>, champtraits: &HashMap<u8, Vec<u8>>,wastes: &HashMap<u8, HashMap<u8, u8>>, min_teamsize: &u8, max_teamsize: &u8, n: &u8) -> HashMap<u8, Vec<Vec<String>>> {
+    // does less than n wasted synergies for all teamsizes between min_teamsize and max_teamsize
+    // returns:
+    // a hashmap mapping teamsize to a vector of teams
+    // n is the maximum number of wasted traits
+
+    // initialize the hashmap
+    let mut teams = HashMap::new();
+    // for each teamsize
+    for teamsize in *min_teamsize..=*max_teamsize {
+        let now = Instant::now();
+        // do the ltn synergies for the teamsize
+        let (teamsize, team) = do_ltn_synergies(champs, traits, champtraits, wastes, &teamsize, n);
+        // add the teams to the hashmap
+        teams.insert(teamsize, team);
+        // print the time it took
+        let elapsed = now.elapsed();
+        // print elapsed time
+        println!("Finished teamsize {} in {}.{:09} seconds", teamsize, elapsed.as_secs(), elapsed.subsec_nanos());
+    }
+    // return the hashmap
+    teams
+}
+fn synergies_to_json(teams: &HashMap<u8, Vec<Vec<String>>>, file: &str) {
     // writes the perfect synergies to a json file using serde_json
     // teams is a hashmap mapping teamsize to a vector of teams
     // file is the name of the file to write to
@@ -193,9 +270,24 @@ fn perfect_synergies_to_json(teams: &HashMap<u8, Vec<Vec<String>>>, file: &str) 
     let teams_json = serde_json::to_string_pretty(teams).unwrap();
     file.write_all(teams_json.as_bytes()).unwrap();
 }
-fn psyns(){
-    let teams = do_all_perfect_synergies(&champs, &traits, &champ_traits, &breaks, &1, &9);
-    perfect_synergies_to_json(&teams, "perfect_synergies.json");
+fn compute_wastes(breaks: &HashMap<u8, HashSet<u8>>) -> HashMap<u8, HashMap<u8, u8>> {
+    // returns:
+    // a hashmap mapping a trait to the wasted traits for each count of that trait
+
+    let mut wastes = HashMap::new();
+    // for each trait
+    for trait_ in breaks.keys() {
+        // initialize the wasted traits for that trait
+        let mut wasted_traits = HashMap::new();
+        // for each possible number of that trait from  1 to 9 (overkill but whatever)
+        for count in 0..=9 {
+            // waste for a count is count-(largest number in the breaks hashset <= count)
+            wasted_traits.insert(count, count - breaks.get(trait_).unwrap().iter().filter(|x| **x <= count).max().unwrap());
+        }
+        // add the wasted traits to the hashmap
+        wastes.insert(*trait_, wasted_traits);
+}
+    wastes
 }
 fn main() {
 // produce the following
@@ -207,4 +299,14 @@ fn main() {
     let (traits, traits_rev) = read_traits("traits.csv");
     let breaks = read_breaks("traits.csv", &traits_rev);
     let champ_traits = read_champ_traits("champs.csv", &champs_rev, &traits_rev);
+    let wastes = compute_wastes(&breaks);
+    let n = 3;
+    let min_team_size = 1;
+    let max_team_size = 9;
+    let teams = do_all_ltn_synergies(&champs, &traits, &champ_traits, &wastes, &min_team_size, &max_team_size, &n);
+    let fname = format!("ltn_synergies_waste_{}.json", n);
+    //let teams = do_all_perfect_synergies(&champs, &traits, &champ_traits, &breaks, &1, &4);
+    //let fname = format!("perfect_synergies.json");
+    synergies_to_json(&teams, &fname);
+
 }
