@@ -1,28 +1,3 @@
-Arcanist, 0, 2, 4, 6, 8
-Assassin, 0, 2, 4, 6
-Bodyguard, 0, 2, 4, 6, 8
-Bruiser, 0, 2, 4, 6, 8
-Challenger, 0, 2, 4, 6, 8
-Colossus, 0, 2
-Enchanter, 0, 2, 3, 4, 5
-Innovator, 0, 3, 5, 7
-Scholar, 0, 2, 4, 6
-Sniper, 0, 2, 4, 6
-Transformer, 0, 1
-Twinshot, 0, 2, 3, 4, 5
-Striker, 0, 2, 4, 6
-Chemtech, 0, 3, 5, 7, 9
-Clockwork, 0, 2, 4, 6
-Debonair, 0, 3, 5, 7
-Enforcer, 0, 3 
-Glutton, 0, 1
-Hextech, 0, 2, 4, 6, 8
-Mastermind, 0, 1
-Mercenary, 0, 3, 5, 7
-Mutant, 0, 3, 5, 7
-Rival, 0, 1
-Scrap, 0, 2, 4, 6
-Socialite, 0, 1, 2, 3, 5
-Syndicate, 0, 3, 5, 7
-Yordle, 0, 3, 6
-Yordle-Lord, 0, 1
+version https://git-lfs.github.com/spec/v1
+oid sha256:669fef935a812041452059f59f37c282dd62da83a5a99a40f9229b5f4d33dc73
+size 571
