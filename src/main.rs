@@ -11,6 +11,7 @@ use serde_json::json;
 use serde::{Deserialize, Serialize, Serializer};
 // _file reading and writing
 use std::fs;
+use std::env;
 use std::fs::File;
 use std::io::Write;
 
@@ -330,25 +331,32 @@ fn compute_wastes(breaks: &HashMap<u8, HashSet<u8>>) -> HashMap<u8, HashMap<u8, 
 }
     wastes
 }
-fn main() {
+fn main () {
+    // args:
+    // 1: the output folder
+    // 2: the maximum waste
+    // 3: the minimum teamsize
+    // 4: the maximum teamsize
+    let args: Vec<String> = env::args().collect();
+
 // produce the following
 // hashmap champs int, string where the ints are champid and the strings are names
 // hashmap costs string, int where the strings are champ names and the ints are the costs
 // hashmap traits int, string where the ints are trait ids and the strings are trait names
 // hashmap breaks int, HashSet<int> where the ints are trait ids and the set is the set of breakpoints
 // champtraits hashmap int, hashset<int> where the ints are champ ids and the set is the set of trait ids for the champ
+
     let (champs, champs_rev) = read_champs("champs.csv");
     let costs = read_costs("champs.csv", &champs_rev);
     let (traits, traits_rev) = read_traits("traits.csv");
     let breaks = read_breaks("traits.csv", &traits_rev);
     let champ_traits = read_champ_traits("champs.csv", &champs_rev, &traits_rev);
     let wastes = compute_wastes(&breaks);
-    let n = 3;
-    let min_team_size = 3;
-    let max_team_size = 8;
+    let out_folder = &args[1];
+    let n = args[2].parse::<u8>().unwrap();
+    let min_team_size = args[3].parse::<u8>().unwrap();
+    let max_team_size = args[4].parse::<u8>().unwrap();
     let teams = do_all_ltn_synergies(&champs, &traits, &champ_traits, &wastes, &costs, &min_team_size, &max_team_size, &n);
-    let fname = format!("ltn_synergies_waste_size_{}_to_{}_maxloss_{}.json", min_team_size, max_team_size, n);
-    //let teams = do_all_perfect_synergies(&champs, &traits, &champ_traits, &breaks, &1, &4);
-    //let fname = format!("perfect_synergies.json");
+    let fname = format!("{}/teams_sizes_{}_to_{}_max_waste_{}.json", out_folder, min_team_size, max_team_size, n);
     synergies_to_json(&teams, &fname);
 }
